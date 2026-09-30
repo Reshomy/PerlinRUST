@@ -4,8 +4,6 @@
 
 This project is done as a side hobby creating noise functions to learn about it and learn RUST.
 
-No generative AI used in the coding, all made by myself.
-
 ### How to generate a .png of Perlin Noise
 
 Using the following command in the root of the project will create a `.png` in the `/Images` folder.
@@ -13,3 +11,12 @@ Using the following command in the root of the project will create a `.png` in t
 ```sh
 cargo run
 ```
+
+## Exemple of a noise created (512 by 512)
+
+![image of perlin noise generated](Images/perlin.png?raw=true)
+
+# Futur implementation
+
+- octaves
+- being able to choose size of image
