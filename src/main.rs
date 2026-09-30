@@ -1,23 +1,18 @@
+use image::{GrayImage, Luma};
 use rand::{RngExt, rngs::ThreadRng};
 use std::f64::consts::TAU;
 
 fn main() {
-    let x = 4.6;
-    let y = 3.9;
-    let xtaille: i32 = 7;
-    let ytaille: i32 = 7;
-    let gradient_map: Vec<Vec<(f64, f64)>> = gradient_map(xtaille, ytaille);
-    let get_value: f64 = perlin(x, y, &gradient_map);
-    println!("{}", get_value);
+    generate_image(512, 512, 50);
 }
 
 //function to generate a gradient map
 fn gradient_map(x: i32, y: i32) -> Vec<Vec<(f64, f64)>> {
-    let mut grad_map: Vec<Vec<(f64, f64)>> = vec![];
-    let mut i: i32 = 0;
+    let mut grad_map = vec![];
+    let mut i = 0;
     while i < x {
-        let mut row: Vec<(f64, f64)> = vec![];
-        let mut j: i32 = 0;
+        let mut row = vec![];
+        let mut j = 0;
         while j < y {
             row.push(gradient_vector());
             j += 1;
@@ -31,7 +26,7 @@ fn gradient_map(x: i32, y: i32) -> Vec<Vec<(f64, f64)>> {
 //function to get a random gradient vector
 fn gradient_vector() -> (f64, f64) {
     let mut rng: ThreadRng = rand::rng();
-    let theta: f64 = rng.random_range(0.0..TAU);
+    let theta = rng.random_range(0.0..TAU);
     let vector: (f64, f64) = (theta.cos(), theta.sin());
     vector
 }
@@ -48,7 +43,7 @@ fn smooth_step(w: f64) -> f64 {
 }
 
 //function to get the scalar product between the distance vector and the gradient vector
-fn dot_grid_gradient(ix: i32, iy: i32, x: f64, y: f64, gv: &Vec<Vec<(f64, f64)>>) -> f64 {
+fn dot_grid_gradient(ix: i32, iy: i32, x: f64, y: f64, gv: &[Vec<(f64, f64)>]) -> f64 {
     let dx: f64 = x - ix as f64;
     let dy: f64 = y - iy as f64;
     dx * gv[iy as usize][ix as usize].0 + dy * gv[iy as usize][ix as usize].1
@@ -59,7 +54,21 @@ fn interpolate(a0: f64, a1: f64, w: f64) -> f64 {
     a0 + (a1 - a0) * smooth_step(w)
 }
 
-fn perlin(x: f64, y: f64, gv: &Vec<Vec<(f64, f64)>>) -> f64 {
+//function converting the perlin noise value to a grayscale value to use in the image creation
+fn convert(value: f64) -> u8 {
+    let normalized = ((value + 1.0) / 2.0) * 255.0;
+    normalized.round() as u8
+}
+
+//finally saves the image in the Images folder in the project
+fn save_image(image: GrayImage) {
+    image
+        .save("Images/perlin.png")
+        .expect("Failed to save image");
+}
+
+//function calculating the value of the perlin noise at the coordinates given
+fn perlin(x: f64, y: f64, gv: &[Vec<(f64, f64)>]) -> f64 {
     //calculate the coords of the corners of the cell where the point is in
     let x0: i32 = x.floor() as i32;
     let x1: i32 = x0 + 1;
@@ -71,7 +80,6 @@ fn perlin(x: f64, y: f64, gv: &Vec<Vec<(f64, f64)>>) -> f64 {
     let sy: f64 = y - y0 as f64;
 
     //interpolation between all points
-
     let n0: f64 = dot_grid_gradient(x0, y0, x, y, gv);
     let n1: f64 = dot_grid_gradient(x1, y0, x, y, gv);
     let ix0: f64 = interpolate(n0, n1, sx);
@@ -84,13 +92,35 @@ fn perlin(x: f64, y: f64, gv: &Vec<Vec<(f64, f64)>>) -> f64 {
     value
 }
 
+//function to generate the image as a PNG, gets an height and a widht and a scale
 fn generate_image(height: i32, width: i32, scale: i32) {
-    let gradient_map: Vec<Vec<(f64, f64)>> = gradient_map(12, 12);
+    //it needs to first calculate the width and height of the gradient map to cover all "corners" of
+    //cells
+    let gradient_width = width as f64 / scale as f64;
+    let gradient_width = gradient_width.ceil() + 1.0;
+    let gradient_height = height as f64 / scale as f64;
+    let gradient_height = gradient_height.ceil() + 1.0;
+    let gradient_map: Vec<Vec<(f64, f64)>> =
+        gradient_map(gradient_width as i32, gradient_height as i32);
+
+    let mut image = GrayImage::new(width as u32, height as u32);
+
+    //adjust the scale of the perlin cells to the scale of the image : more cells = more details and
+    //the "scale" parameter is lower
     for y in 0..height {
         for x in 0..width {
-            let pixel_x: i32 = x / scale;
-            let pixel_y: i32 = y / scale;
-            perlin(pixel_x, pixel_y, &gradient_map)
+            let pixel_x: f64 = x as f64 / scale as f64;
+            let pixel_y: f64 = y as f64 / scale as f64;
+
+            //calculate the perlin noise value for the current pixel
+            let pixel_value = perlin(pixel_x, pixel_y, &gradient_map);
+
+            //convert the perlin noise value into a gray value
+            let pixel_value = convert(pixel_value);
+
+            //for every pixel write the calculated gray value
+            image.put_pixel(x as u32, y as u32, Luma([pixel_value]));
         }
     }
+    save_image(image);
 }
