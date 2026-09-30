@@ -8,7 +8,8 @@ No generative AI used in the coding, all made by myself.
 
 ### How to generate a .png of Perlin Noise
 
-Using the following command in the root of the project will create a '.png' in the 'Images' folder.
-'''sh
+Using the following command in the root of the project will create a `.png` in the `Images` folder.
+
+```sh
 cargo run
-'''
+```
