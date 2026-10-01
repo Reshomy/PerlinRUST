@@ -3,7 +3,7 @@ use rand::RngExt;
 use std::f64::consts::TAU;
 
 fn main() {
-    generate_image(512, 512, 50);
+    generate_image(512, 15, 2);
 }
 
 //function to generate a gradient map
@@ -95,12 +95,15 @@ fn perlin(x: f64, y: f64, width: usize, gv: &[(f64, f64)]) -> f64 {
 }
 
 //function to generate the image as a PNG, gets an height and a widht and a scale
-fn generate_image(height: i32, width: i32, scale: i32) {
+fn generate_image(height: i32, scale: i32, octaves: i32) {
     //it needs to first calculate the width and height of the gradient map to cover all "corners" of
     //cells
-    let gradient_width = width as f64 / scale as f64;
+    let width = height;
+    let max_frequency = 2_i32.pow((octaves - 1) as u32);
+
+    let gradient_width = (width as f64 / scale as f64) * max_frequency as f64;
     let gradient_width = gradient_width.ceil() + 1.0;
-    let gradient_height = height as f64 / scale as f64;
+    let gradient_height = (height as f64 / scale as f64) * max_frequency as f64;
     let gradient_height = gradient_height.ceil() + 1.0;
     let gradient_map = gradient_map(gradient_width as usize, gradient_height as usize);
 
@@ -114,7 +117,25 @@ fn generate_image(height: i32, width: i32, scale: i32) {
             let pixel_y = y as f64 / scale as f64;
 
             //calculate the perlin noise value for the current pixel
-            let pixel_value = perlin(pixel_x, pixel_y, gradient_width as usize, &gradient_map);
+            let mut pixel_value = 0.0;
+            let mut amplitude_total = 0.0;
+            let mut frequency = 1.0;
+            let mut amplitude = 1.0;
+
+            for _ in 1..octaves + 1 {
+                pixel_value += perlin(
+                    pixel_x * frequency,
+                    pixel_y * frequency,
+                    gradient_width as usize,
+                    &gradient_map,
+                ) * amplitude;
+
+                amplitude_total += amplitude;
+
+                frequency *= 2.0;
+                amplitude *= 0.5;
+            }
+            pixel_value /= amplitude_total;
 
             //convert the perlin noise value into a gray value
             let pixel_value = convert(pixel_value);
