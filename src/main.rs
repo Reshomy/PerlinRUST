@@ -3,6 +3,7 @@ use rand::RngExt;
 use std::f64::consts::TAU;
 use std::io;
 
+//main function asking for the parameters and launching the generation
 fn main() {
     let mut input = String::new();
 

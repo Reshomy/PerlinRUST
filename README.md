@@ -12,6 +12,8 @@ Using the following command in the root of the project will create a `.png` in t
 cargo run
 ```
 
+Then you will have to choose image size, image scale (zoom out = lower number, zoom in = bigger number) and number of octaves.
+
 ## Exemple of a noise created (512 by 512)
 
 ![image of perlin noise generated](Images/perlin.png?raw=true)
