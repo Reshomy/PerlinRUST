@@ -1,9 +1,34 @@
 use image::{GrayImage, Luma};
 use rand::RngExt;
 use std::f64::consts::TAU;
+use std::io;
 
 fn main() {
-    generate_image(512, 15, 2);
+    let mut input = String::new();
+
+    println!("Enter image size:");
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read input");
+    let height: i32 = input.trim().parse().expect("Please enter a valid number");
+
+    input.clear();
+
+    println!("Enter scale:");
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read input");
+    let scale: i32 = input.trim().parse().expect("Please enter a valid number");
+
+    input.clear();
+
+    println!("Enter number of octaves:");
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read input");
+    let octaves: i32 = input.trim().parse().expect("Please enter a valid number");
+
+    generate_image(height, scale, octaves);
 }
 
 //function to generate a gradient map
