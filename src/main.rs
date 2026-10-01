@@ -7,18 +7,10 @@ fn main() {
 }
 
 //function to generate a gradient map
-fn gradient_map(x: i32, y: i32) -> Vec<Vec<(f64, f64)>> {
-    let mut grad_map = vec![];
-    let mut i = 0;
-    while i < x {
-        let mut row = vec![];
-        let mut j = 0;
-        while j < y {
-            row.push(gradient_vector());
-            j += 1;
-        }
-        i += 1;
-        grad_map.push(row);
+fn gradient_map(x: usize, y: usize) -> Vec<(f64, f64)> {
+    let mut grad_map = Vec::with_capacity(x * y);
+    for _ in 0..x * y {
+        grad_map.push(gradient_vector());
     }
     grad_map
 }
@@ -42,10 +34,20 @@ fn smooth_step(w: f64) -> f64 {
 }
 
 //function to get the scalar product between the distance vector and the gradient vector
-fn dot_grid_gradient(ix: i32, iy: i32, x: f64, y: f64, gv: &[Vec<(f64, f64)>]) -> f64 {
+fn dot_grid_gradient(
+    ix: i32,
+    iy: i32,
+    width: usize,
+    x: f64,
+    y: f64,
+    gradient_map: &[(f64, f64)],
+) -> f64 {
     let dx = x - ix as f64;
     let dy = y - iy as f64;
-    dx * gv[iy as usize][ix as usize].0 + dy * gv[iy as usize][ix as usize].1
+
+    let index = iy as usize * width + ix as usize;
+    let gradient = gradient_map[index];
+    dx * gradient.0 + dy * gradient.1
 }
 
 //function to interpolate and get a value between 2 points based on the distance from each (weight)
@@ -67,7 +69,7 @@ fn save_image(image: GrayImage) {
 }
 
 //function calculating the value of the perlin noise at the coordinates given
-fn perlin(x: f64, y: f64, gv: &[Vec<(f64, f64)>]) -> f64 {
+fn perlin(x: f64, y: f64, width: usize, gv: &[(f64, f64)]) -> f64 {
     //calculate the coords of the corners of the cell where the point is in
     let x0 = x.floor() as i32;
     let x1 = x0 + 1;
@@ -79,12 +81,14 @@ fn perlin(x: f64, y: f64, gv: &[Vec<(f64, f64)>]) -> f64 {
     let sy = y - y0 as f64;
 
     //interpolation between all points
-    let n0 = dot_grid_gradient(x0, y0, x, y, gv);
-    let n1 = dot_grid_gradient(x1, y0, x, y, gv);
+    let n0 = dot_grid_gradient(x0, y0, width, x, y, gv);
+    let n1 = dot_grid_gradient(x1, y0, width, x, y, gv);
+
     let ix0 = interpolate(n0, n1, sx);
 
-    let n0 = dot_grid_gradient(x0, y1, x, y, gv);
-    let n1 = dot_grid_gradient(x1, y1, x, y, gv);
+    let n0 = dot_grid_gradient(x0, y1, width, x, y, gv);
+    let n1 = dot_grid_gradient(x1, y1, width, x, y, gv);
+
     let ix1 = interpolate(n0, n1, sx);
 
     interpolate(ix0, ix1, sy)
@@ -98,7 +102,7 @@ fn generate_image(height: i32, width: i32, scale: i32) {
     let gradient_width = gradient_width.ceil() + 1.0;
     let gradient_height = height as f64 / scale as f64;
     let gradient_height = gradient_height.ceil() + 1.0;
-    let gradient_map = gradient_map(gradient_width as i32, gradient_height as i32);
+    let gradient_map = gradient_map(gradient_width as usize, gradient_height as usize);
 
     let mut image = GrayImage::new(width as u32, height as u32);
 
@@ -110,7 +114,7 @@ fn generate_image(height: i32, width: i32, scale: i32) {
             let pixel_y = y as f64 / scale as f64;
 
             //calculate the perlin noise value for the current pixel
-            let pixel_value = perlin(pixel_x, pixel_y, &gradient_map);
+            let pixel_value = perlin(pixel_x, pixel_y, gradient_width as usize, &gradient_map);
 
             //convert the perlin noise value into a gray value
             let pixel_value = convert(pixel_value);
