@@ -4,9 +4,9 @@
 
 This project is done as a side hobby creating noise functions to learn about it and learn RUST.
 
-### How to generate a PNG file of a Perlin Noise
+## How to generate a PNG file of a Perlin Noise
 
-# You need to have RUST using cargo to run it
+### You need to have RUST using cargo to run it
 
 Using the following command in the root of the project will create a `.png` in the `/Images` folder.
 
